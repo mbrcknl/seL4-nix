@@ -4,15 +4,6 @@ with pkgs; let
 
   python-with-my-packages = python310.withPackages (python-pkgs: with python-pkgs;
     let
-      pyfdt = buildPythonPackage rec {
-        pname = "pyfdt";
-        version = "0.3";
-        src = fetchPypi {
-          inherit pname version;
-          sha256 = "1w7lp421pssfgv901103521qigwb12i6sk68lqjllfgz0lh1qq31";
-        };
-      };
-
       autopep8_1_4_3 = buildPythonPackage rec {
         pname = "autopep8";
         version = "1.4.3";
@@ -54,6 +45,15 @@ with pkgs; let
         ];
       };
 
+      pyfdt = buildPythonPackage rec {
+        pname = "pyfdt";
+        version = "0.3";
+        src = fetchPypi {
+          inherit pname version;
+          sha256 = "1w7lp421pssfgv901103521qigwb12i6sk68lqjllfgz0lh1qq31";
+        };
+      };
+
       sel4-deps = buildPythonPackage rec {
         pname = "sel4-deps";
         version = "0.3.1";
@@ -65,29 +65,83 @@ with pkgs; let
           substituteInPlace setup.py --replace bs4 beautifulsoup4
         '';
         propagatedBuildInputs = [
-          six
+          autopep8_1_4_3
+          beautifulsoup4
+          cmake-format
           future
+          guardonce
           jinja2
+          jsonschema
+          libarchive-c
           lxml
+          pexpect
           ply
           psutil
-          beautifulsoup4
-          sh
-          pexpect
           pyaml
-          jsonschema
-          pyfdt
-          cmake-format
-          guardonce
-          autopep8_1_4_3
           pyelftools
-          libarchive-c
-          # not listed in requirements.txt
+          pyfdt
           setuptools
+          six
+          sh
         ];
       };
 
-    in [ sel4-deps ]); 
+      python-subunit = buildPythonPackage rec {
+        pname = "python-subunit";
+        version = "1.4.0";
+        src = fetchPypi {
+          inherit pname version;
+          sha256 = "sha256-BCA5koEg+/OS6MmD1g89iuG4j5Cp+P1xiN3ZwmytHkg=";
+        };
+        propagatedBuildInputs = [
+          extras
+          testtools
+        ];
+      };
+
+      concurrencytest = buildPythonPackage rec {
+        pname = "concurrencytest";
+        version = "0.1.2";
+        src = fetchPypi {
+          inherit pname version;
+          sha256 = "sha256-ZKnFtc25lJo3X8xeEUqCGA9qB8waAm05ViMK7PmAwtg=";
+        };
+        propagatedBuildInputs = [
+          python-subunit
+        ];
+      };
+
+      orderedset = buildPythonPackage rec {
+        pname = "orderedset";
+        version = "2.0.3";
+        src = fetchPypi {
+          inherit pname version;
+          sha256 = "sha256-svXM+1qG57Oz3fGLKXecwYskZTq/nW2kvr7PM3gKbik=";
+        };
+        doCheck = false;
+      };
+
+      camkes-deps = buildPythonPackage rec {
+        pname = "camkes-deps";
+        version = "0.7.1";
+        src = fetchPypi {
+          inherit pname version;
+          sha256 = "sha256-2Mfu3QLrzVjhvKM7P7T5br53xzeAG4H4uaY2dVtil4c=";
+        };
+        propagatedBuildInputs = [
+          aenum
+          concurrencytest
+          hypothesis
+          orderedset
+          plyplus
+          pycparser
+          sel4-deps
+          simpleeval
+          sortedcontainers
+        ];
+      };
+
+    in [ camkes-deps ]);
 
   # Some packages don't yet work natively on Apple Silicon, but do work with Rosetta.
   legacy = if buildPlatform.config == "aarch64-apple-darwin"
