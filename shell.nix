@@ -1,7 +1,13 @@
+# Copyright 2020, Arm Limited
+# Copyright 2022, Kry10 Limited
+#
+# SPDX-License-Identifier: MIT
+
 { nixpkgs ? <nixpkgs>, pkgs ? import nixpkgs {} }:
 
 with pkgs; let
 
+  # Adapted from https://gitlab.com/arm-research/security/icecap/icecap
   python-with-my-packages = python310.withPackages (python-pkgs: with python-pkgs;
     let
       autopep8_1_4_3 = buildPythonPackage rec {
