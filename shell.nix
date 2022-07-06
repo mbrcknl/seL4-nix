@@ -8,8 +8,8 @@ let
   nixpkgs_url = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "e283c3a09205e372a7f5ca5e0da1c21dac341800";
-    sha256 = "sha256-b9L2Sb0qDktqLN6Flac5uwl1w8rFhMhOjFOiVe/GBso=";
+    rev = "8832a980c12e941245d7e0875c86767e0253428c";
+    sha256 = "sha256-izdFVe9ACq/JtMqrvd12PafCx4Ee1I+NZMTqUTfvOG0=";
   };
 
 in
