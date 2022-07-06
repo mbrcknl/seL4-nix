@@ -3,12 +3,24 @@
 #
 # SPDX-License-Identifier: MIT
 
-{ nixpkgs ? <nixpkgs>, pkgs ? import nixpkgs {} }:
+let
+
+  nixpkgs_url = (import <nixpkgs> {}).fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
+    rev = "a923e194a3f21ed8a31367c96530a06756ed993e";
+    sha256 = "sha256-Camm/RoFF72p91kES1AK+j0fYsrR6zUZhI/D9bU4HGg=";
+  };
+
+in
+
+{ nixpkgs ? nixpkgs_url, pkgs ? import nixpkgs {} }:
+
 
 with pkgs; let
 
   # Adapted from https://gitlab.com/arm-research/security/icecap/icecap
-  python-with-my-packages = python310.withPackages (python-pkgs: with python-pkgs;
+  python-with-my-packages = python3.withPackages (python-pkgs: with python-pkgs;
     let
       autopep8_1_4_3 = buildPythonPackage rec {
         pname = "autopep8";
