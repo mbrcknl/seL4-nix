@@ -1,11 +1,6 @@
-let
+with import ./lib.nix;
 
-  fetch_nixpkgs = { rev, sha256 }:
-    import (fetchTarball {
-      name = "nixpkgs-${rev}";
-      url = "https://github.com/nixos/nixpkgs/archive/${rev}.tar.gz";
-      inherit sha256;
-    });
+let
 
   mk_cross_toolchain = import_pkgs: pkgs_config: crossSystem:
     let pkgs_cross = import_pkgs (pkgs_config // { inherit crossSystem; });
@@ -16,11 +11,7 @@ let
 
   cross_tools =
     let
-      import_pkgs = fetch_nixpkgs {
-        # nixos-unstable at 2023-01-13
-        rev = "6c8644fc37b6e141cbfa6c7dc8d98846c4ff0c2e";
-        sha256 = "sha256:0p9843f0yz9vfyx79d5s1z4r6sz9bwjlnz04xv0xjdib9kxadivg";
-      };
+      import_pkgs = default_pkgs;
       pkgs = import_pkgs {};
       mk_cross = mk_cross_toolchains import_pkgs {};
       cross_tools = with pkgs.lib.systems.examples; mk_cross [
@@ -40,13 +31,7 @@ let
         sha256 = "sha256:0nma745rx2f2syggzl99r0mv1pmdy36nsar1wxggci647gdqriwf";
       };
       pkgs = import_pkgs {};
-      # These configurations also don't work on Apple Silicon,
-      # so build via Rosetta 2 instead.
-      legacy_pkgs_config =
-        if pkgs.buildPlatform.config == "aarch64-apple-darwin"
-        then { localSystem = pkgs.lib.systems.examples.x86_64-darwin; }
-        else {};
-      mk_cross = mk_cross_toolchains import_pkgs legacy_pkgs_config;
+      mk_cross = mk_cross_toolchains import_pkgs (legacy_pkgs_config pkgs);
       cross_tools = with pkgs.lib.systems.examples; mk_cross [
         aarch64-embedded
         arm-embedded

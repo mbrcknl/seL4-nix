@@ -3,22 +3,16 @@
 #
 # SPDX-License-Identifier: MIT
 
+with import ./lib.nix;
+
 let
 
-  nixpkgs_url = (import <nixpkgs> {}).fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs";
-    # nixos-22.05 on 2022-07-06
-    rev = "9e96b1562d67a90ca2f7cfb919f1e86b76a65a2c";
-    sha256 = "sha256-jseM2zvERPZe5yErbc3wrd6wK8gp0f+e18KJngs5qlo=";
-  };
+  pkgs = default_pkgs {};
+  legacy_pkgs = default_pkgs (legacy_pkgs_config pkgs);
 
-in
+in with pkgs; let
 
-{ nixpkgs ? nixpkgs_url, pkgs ? import nixpkgs {} }:
-
-
-with pkgs; let
+  cross_tools = import ./cross-tools.nix;
 
   # Adapted from https://gitlab.com/arm-research/security/icecap/icecap
   python-with-my-packages = python3.withPackages (python-pkgs: with python-pkgs;
@@ -162,31 +156,6 @@ with pkgs; let
 
     in [ camkes-deps ]);
 
-  # Some packages don't yet work natively on Apple Silicon, but do work with Rosetta.
-  legacy = if buildPlatform.config == "aarch64-apple-darwin"
-    then rec { sys = { localSystem = lib.systems.examples.x86_64-darwin; }; pkgs = import nixpkgs sys; }
-    else { sys = {}; inherit pkgs; };
-
-  # In particular, cross-compilers don't currently build on Apple Silicon.
-  pkgs_cross = config:
-    let pkgs_base = import nixpkgs (legacy.sys // { crossSystem = { inherit config; }; });
-    in pkgs_base.pkgsBuildTarget;
-
-  cross_pkgs = {
-    x86_64 = pkgs_cross "x86_64-unknown-linux-gnu";
-    armv7_hf = pkgs_cross "armv7l-unknown-linux-gnueabihf";
-    aarch64 = pkgs_cross "aarch64-unknown-linux-gnu";
-    riscv64 = pkgs_cross "riscv64-unknown-linux-gnu";
-    arm = pkgs_cross "arm-none-eabi";
-  };
-
-  cross_tools = lib.concatMap (p: [p.gcc-unwrapped p.binutils-unwrapped]) (lib.attrValues cross_pkgs);
-
-  wrapClangWithCross = clangBinary: gccToolchains: pkgs.writeScriptBin clangBinary ''
-    #!${pkgs.stdenv.shell}
-    exec ${llvmPackages_9.clang-unwrapped}/bin/${clangBinary} ${toString (builtins.map (x: "-B${x}") gccToolchains)} "$@"
-  '';
-
   # Checks don't work on macOS
   dtc = pkgs.dtc.overrideAttrs (_: { doCheck = buildPlatform.isLinux; });
 
@@ -200,7 +169,7 @@ with pkgs; let
     cpio
     strip-nondeterminism
     clang.cc
-    legacy.pkgs.mlton
+    legacy_pkgs.mlton
   ];
 
 in mkShell {
